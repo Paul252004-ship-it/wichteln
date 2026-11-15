@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wichteln</title>
+<meta name="description" content="Wichtel-Partner geheim ziehen – nur du siehst, wen du beschenkst.">
+<style>
+  :root {
+    --bg: #fbf7f2;
+    --card: #ffffff;
+    --text: #22201d;
+    --muted: #6d6760;
+    --line: #e7e0d7;
+    --accent: #b3261e;
+    --accent-ink: #ffffff;
+    --soft: #f4ece3;
+    --ok: #1f7a4d;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #161412;
+      --card: #211e1b;
+      --text: #f2ede7;
+      --muted: #a69e95;
+      --line: #36312c;
+      --accent: #e0574e;
+      --accent-ink: #ffffff;
+      --soft: #2a2622;
+      --ok: #4fbf87;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 520px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.8rem; margin: 0 0 4px; }
+  h2 { font-size: 1.15rem; margin: 0 0 12px; }
+  p { margin: 0 0 12px; }
+  .muted { color: var(--muted); font-size: .92rem; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 18px; margin: 16px 0;
+  }
+  label { display: block; font-weight: 600; font-size: .9rem; margin: 10px 0 4px; }
+  input, textarea {
+    width: 100%; font: inherit; color: var(--text); background: var(--bg);
+    border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+  }
+  textarea { min-height: 220px; resize: vertical; }
+  input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  button, .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    font: inherit; font-weight: 600; border: 0; border-radius: 10px;
+    padding: 12px 16px; cursor: pointer; text-decoration: none;
+    background: var(--accent); color: var(--accent-ink); width: 100%; margin-top: 12px;
+  }
+  .btn.secondary, button.secondary { background: var(--soft); color: var(--text); }
+  .row { display: flex; gap: 8px; }
+  .row > * { flex: 1; }
+  .names { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .names button { margin: 0; background: var(--soft); color: var(--text); font-weight: 500; }
+  .names button.done { opacity: .55; }
+  .reveal {
+    text-align: center; padding: 28px 12px; border-radius: 14px;
+    background: var(--soft); margin-top: 12px;
+  }
+  .reveal .big { font-size: 2rem; font-weight: 800; color: var(--accent); word-break: break-word; }
+  .error { color: var(--accent); font-weight: 600; }
+  .ok { color: var(--ok); font-weight: 600; }
+  .linkbox { word-break: break-all; font-size: .8rem; background: var(--soft); padding: 10px; border-radius: 10px; }
+  .list { list-style: none; padding: 0; margin: 0; }
+  .list li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .list li:last-child { border-bottom: 0; }
+  .list a { width: auto; margin: 0; padding: 8px 12px; font-size: .9rem; }
+  .hidden { display: none !important; }
+  details summary { cursor: pointer; font-weight: 600; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>🎁 Wichteln</h1>
+    <p class="muted" id="subtitle">Geheim ziehen – nur du siehst, wen du beschenkst.</p>
+  </header>
+
+  <!-- ORGANISATOR -->
+  <section id="setup" class="hidden">
+    <div class="card">
+      <h2>1. Namen eintragen</h2>
+      <label for="names">Ein Name pro Zeile</label>
+      <textarea id="names" placeholder="Anna&#10;Ben&#10;Clara&#10;…"></textarea>
+      <label for="title">Titel (optional)</label>
+      <input id="title" placeholder="z. B. Wichteln 2026">
+      <div class="row">
+        <div><label for="budget">Budget (optional)</label><input id="budget" placeholder="z. B. 20 €"></div>
+        <div><label for="date">Datum (optional)</label><input id="date" placeholder="z. B. 20.12."></div>
+      </div>
+      <details style="margin-top:14px">
+        <summary>Paare ausschließen (optional)</summary>
+        <p class="muted" style="margin-top:8px">Z. B. Pärchen, die sich nicht gegenseitig ziehen sollen. Ein Paar pro Zeile, mit Komma getrennt: <code>Anna, Ben</code></p>
+        <textarea id="excl" style="min-height:80px" placeholder="Anna, Ben"></textarea>
+      </details>
+      <p id="setupError" class="error" style="margin-top:10px"></p>
+      <button id="generate">Auslosen & Link erstellen</button>
+      <p class="muted" style="margin-top:10px">Die Auslosung passiert sofort, aber <b>du siehst das Ergebnis nicht</b> – es steckt verschlüsselt im Link.</p>
+    </div>
+
+    <div class="card hidden" id="result">
+      <h2>2. Link in die WhatsApp-Gruppe schicken</h2>
+      <p>Jeder öffnet den Link, tippt auf seinen eigenen Namen und sieht nur seinen Partner.</p>
+      <a class="btn" id="waGroup" target="_blank" rel="noopener">In WhatsApp teilen</a>
+      <button class="secondary" id="copyGroup">Link kopieren</button>
+      <p id="copied" class="ok" style="margin-top:8px"></p>
+      <div class="linkbox" id="groupLink"></div>
+
+      <details style="margin-top:16px">
+        <summary>Extra sicher: jedem einen eigenen Link schicken</summary>
+        <p class="muted" style="margin-top:8px">Beim Gruppen-Link gilt Ehrenwort: Theoretisch könnte jemand auf einen fremden Namen tippen. Wenn du das ausschließen willst, schick stattdessen jedem seinen persönlichen Link privat. Du siehst dabei weiterhin nicht, wer wen hat.</p>
+        <ul class="list" id="personal"></ul>
+      </details>
+      <button class="secondary" id="restart">Neu auslosen</button>
+    </div>
+  </section>
+
+  <!-- ZIEHEN (Gruppen-Link) -->
+  <section id="draw" class="hidden">
+    <div class="card" id="pickCard">
+      <h2>Wer bist du?</h2>
+      <p class="muted">Tippe auf <b>deinen eigenen</b> Namen. Bitte nicht bei anderen schauen 😉</p>
+      <div class="names" id="nameButtons"></div>
+    </div>
+    <div class="card hidden" id="confirmCard">
+      <h2>Bist du wirklich <span id="confirmName"></span>?</h2>
+      <p class="muted">Gleich wird dein Wichtel-Partner angezeigt. Schau, dass niemand mitliest.</p>
+      <button id="doReveal">Ja, Partner zeigen</button>
+      <button class="secondary" id="cancelReveal">Zurück</button>
+    </div>
+  </section>
+
+  <!-- ERGEBNIS -->
+  <section id="show" class="hidden">
+    <div class="card">
+      <p style="margin:0">Hallo <b id="giverName"></b>, du beschenkst:</p>
+      <div class="reveal"><div class="big" id="receiverName"></div></div>
+      <p class="muted" id="details" style="margin-top:12px"></p>
+      <p class="muted">Mach dir am besten einen Screenshot oder merk dir den Namen. Und: Psst! 🤫</p>
+      <button class="secondary" id="backToList">Fertig</button>
+    </div>
+  </section>
+
+  <section id="broken" class="hidden">
+    <div class="card"><p class="error">Dieser Link ist ungültig oder unvollständig. Bitte den kompletten Link aus WhatsApp öffnen.</p></div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const show = (id) => ["setup", "draw", "show", "broken"].forEach(s => $(s).classList.toggle("hidden", s !== id));
+
+  // --- Verschleierung: JSON -> XOR mit Zufallsschlüssel -> base64url ---
+  // Ziel: Wer den Link sieht, kann die Zuordnung nicht einfach ablesen.
+  function encode(obj) {
+    const data = new TextEncoder().encode(JSON.stringify(obj));
+    const key = crypto.getRandomValues(new Uint8Array(16));
+    const out = new Uint8Array(key.length + data.length);
+    out.set(key);
+    for (let i = 0; i < data.length; i++) out[key.length + i] = data[i] ^ key[i % key.length] ^ (i * 31 & 255);
+    let bin = ""; out.forEach(b => bin += String.fromCharCode(b));
+    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+  function decode(str) {
+    const b64 = str.replace(/-/g, "+").replace(/_/g, "/");
+    const bin = atob(b64 + "===".slice((b64.length + 3) % 4));
+    const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+    const key = bytes.slice(0, 16), data = bytes.slice(16);
+    for (let i = 0; i < data.length; i++) data[i] ^= key[i % 16] ^ (i * 31 & 255);
+    return JSON.parse(new TextDecoder().decode(data));
+  }
+
+  function randInt(n) {
+    const buf = new Uint32Array(1), lim = Math.floor(0x100000000 / n) * n;
+    do crypto.getRandomValues(buf); while (buf[0] >= lim);
+    return buf[0] % n;
+  }
+  function shuffle(a) {
+    for (let i = a.length - 1; i > 0; i--) { const j = randInt(i + 1); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+  // Zufällige Zuordnung: niemand zieht sich selbst, ausgeschlossene Paare werden beachtet.
+  function assign(n, banned) {
+    for (let tries = 0; tries < 20000; tries++) {
+      const p = shuffle([...Array(n).keys()]);
+      let ok = true;
+      for (let i = 0; i < n && ok; i++) if (p[i] === i || banned.has(i + ":" + p[i])) ok = false;
+      if (ok) return p;
+    }
+    return null;
+  }
+
+  const baseUrl = location.href.split("#")[0].split("?")[0];
+  const storeKey = (id) => "wichteln-gezogen-" + id;
+  const safeGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+  const safeSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+
+  function detailsText(d) {
+    const parts = [];
+    if (d.b) parts.push("Budget: " + d.b);
+    if (d.d) parts.push("Datum: " + d.d);
+    return parts.join(" · ");
+  }
+  function setTitle(d) {
+    if (d.t) { document.querySelector("h1").textContent = "🎁 " + d.t; document.title = d.t; }
+  }
+
+  // ---------- Organisator ----------
+  function setup() {
+    show("setup");
+    $("generate").onclick = () => {
+      $("setupError").textContent = "";
+      const names = $("names").value.split(/\n/).map(s => s.trim()).filter(Boolean);
+      const lower = names.map(n => n.toLowerCase());
+      if (names.length < 3) return $("setupError").textContent = "Bitte mindestens 3 Namen eintragen.";
+      const dup = lower.find((n, i) => lower.indexOf(n) !== i);
+      if (dup) return $("setupError").textContent = "Doppelter Name: " + dup + " – bitte eindeutig machen (z. B. mit Nachnamen-Initiale).";
+
+      const banned = new Set();
+      for (const line of $("excl").value.split(/\n/)) {
+        if (!line.trim()) continue;
+        const [a, b] = line.split(",").map(s => s.trim().toLowerCase());
+        const i = lower.indexOf(a), j = lower.indexOf(b);
+        if (i < 0 || j < 0) return $("setupError").textContent = "Ausschluss nicht gefunden: „" + line.trim() + "“";
+        banned.add(i + ":" + j); banned.add(j + ":" + i);
+      }
+      const p = assign(names.length, banned);
+      if (!p) return $("setupError").textContent = "Mit diesen Ausschlüssen ist keine Auslosung möglich.";
+
+      const meta = { t: $("title").value.trim(), b: $("budget").value.trim(), d: $("date").value.trim() };
+      const id = Array.from(crypto.getRandomValues(new Uint8Array(6)), b => b.toString(16).padStart(2, "0")).join("");
+      const groupUrl = baseUrl + "#g=" + encode({ id, n: names, a: p, ...meta });
+
+      $("groupLink").textContent = groupUrl;
+      const msg = "🎁 " + (meta.t || "Wichteln") + "!\nÖffne den Link, tippe auf DEINEN Namen und du siehst, wen du beschenkst:\n" + groupUrl;
+      $("waGroup").href = "https://wa.me/?text=" + encodeURIComponent(msg);
+      $("copyGroup").onclick = async () => {
+        try { await navigator.clipboard.writeText(groupUrl); $("copied").textContent = "Link kopiert ✓"; }
+        catch { $("copied").textContent = "Kopieren nicht möglich – bitte den Link unten markieren."; }
+      };
+
+      const ul = $("personal"); ul.innerHTML = "";
+      names.forEach((name, i) => {
+        const url = baseUrl + "#p=" + encode({ g: name, r: names[p[i]], ...meta });
+        const li = document.createElement("li");
+        const span = document.createElement("span"); span.textContent = name;
+        const a = document.createElement("a"); a.className = "btn"; a.target = "_blank"; a.rel = "noopener";
+        a.textContent = "Per WhatsApp";
+        a.href = "https://wa.me/?text=" + encodeURIComponent("🎁 Hallo " + name + ", hier ist dein persönlicher Wichtel-Link (nur für dich!):\n" + url);
+        li.append(span, a); ul.append(li);
+      });
+
+      $("result").classList.remove("hidden");
+      $("generate").classList.add("hidden");
+      $("result").scrollIntoView({ behavior: "smooth" });
+    };
+    $("restart").onclick = () => {
+      $("result").classList.add("hidden");
+      $("generate").classList.remove("hidden");
+      $("copied").textContent = "";
+    };
+  }
+
+  // ---------- Reveal ----------
+  function reveal(giver, receiver, d, onBack) {
+    $("giverName").textContent = giver;
+    $("receiverName").textContent = receiver;
+    $("details").textContent = detailsText(d);
+    show("show");
+    $("backToList").onclick = onBack;
+  }
+
+  // ---------- Gruppen-Link ----------
+  function group(d) {
+    setTitle(d);
+    $("subtitle").textContent = "Tippe auf deinen Namen, um deinen Wichtel-Partner zu sehen." + (detailsText(d) ? " " + detailsText(d) : "");
+    const render = () => {
+      show("draw");
+      $("pickCard").classList.remove("hidden");
+      $("confirmCard").classList.add("hidden");
+      const box = $("nameButtons"); box.innerHTML = "";
+      const mine = safeGet(storeKey(d.id));
+      d.n.forEach((name, i) => {
+        const b = document.createElement("button");
+        b.textContent = name + (mine === String(i) ? " ✓" : "");
+        if (mine === String(i)) b.classList.add("done");
+        b.onclick = () => {
+          $("confirmName").textContent = name;
+          $("pickCard").classList.add("hidden");
+          $("confirmCard").classList.remove("hidden");
+          $("doReveal").onclick = () => {
+            safeSet(storeKey(d.id), String(i));
+            reveal(name, d.n[d.a[i]], d, render);
+          };
+          $("cancelReveal").onclick = render;
+        };
+        box.append(b);
+      });
+    };
+    render();
+  }
+
+  // ---------- Router ----------
+  const h = location.hash;
+  try {
+    if (h.startsWith("#g=")) {
+      const d = decode(h.slice(3));
+      if (!Array.isArray(d.n) || !Array.isArray(d.a) || d.n.length !== d.a.length) throw 0;
+      group(d);
+    } else if (h.startsWith("#p=")) {
+      const d = decode(h.slice(3));
+      if (!d.g || !d.r) throw 0;
+      setTitle(d);
+      $("subtitle").textContent = "Dein persönlicher Wichtel-Link.";
+      reveal(d.g, d.r, d, () => { $("backToList").textContent = "Fertig ✓"; });
+    } else {
+      setup();
+    }
+  } catch { show("broken"); }
+})();
+</script>
+</body>
+</html>
