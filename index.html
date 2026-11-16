@@ -201,7 +201,7 @@
     return null;
   }
 
-  const baseUrl = location.href.split("#")[0].split("?")[0];
+  const baseUrl = location.href.split("#")[0];
   const storeKey = (id) => "wichteln-gezogen-" + id;
   const safeGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
   const safeSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
